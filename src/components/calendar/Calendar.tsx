@@ -1,70 +1,68 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { format, addMonths, addWeeks, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { ViewType, Event } from '../../types/calendar';
+import { RootState } from '../../store/store';
+import {
+  setCurrentDate,
+  setView,
+  addEvent,
+  updateEvent,
+  deleteEvent,
+  setSelectedEvent,
+  setShowEventModal,
+  setFilter
+} from '../../store/calendarSlice';
 import MonthView from './MonthView';
 import WeekView from './WeekView';
 import DayView from './DayView';
 import EventModal from './EventModal';
 import EventList from './EventList';
 
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Team Meeting',
-    description: 'Weekly sync with the development team',
-    start: new Date(2024, 2, 15, 10, 0),
-    end: new Date(2024, 2, 15, 11, 30),
-    category: 'meeting',
-    color: '#4F46E5'
-  },
-  {
-    id: '2',
-    title: 'Product Launch',
-    description: 'New feature release',
-    start: new Date(2024, 2, 20, 14, 0),
-    end: new Date(2024, 2, 20, 16, 0),
-    category: 'event',
-    color: '#059669'
-  }
-];
-
 export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<ViewType>('month');
-  const [events, setEvents] = useState<Event[]>(mockEvents);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [filter, setFilter] = useState<string>('all');
+  const dispatch = useDispatch();
+  const {
+    currentDate,
+    view,
+    events,
+    selectedEvent,
+    showEventModal,
+    filter
+  } = useSelector((state: RootState) => state.calendar);
+
+  const currentDateObj = new Date(currentDate);
 
   const navigateDate = (direction: 'prev' | 'next') => {
+    let newDate: Date;
     if (view === 'month') {
-      setCurrentDate(direction === 'next' ? addMonths(currentDate, 1) : addMonths(currentDate, -1));
+      newDate = direction === 'next' ? addMonths(currentDateObj, 1) : addMonths(currentDateObj, -1);
     } else if (view === 'week') {
-      setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : addWeeks(currentDate, -1));
+      newDate = direction === 'next' ? addWeeks(currentDateObj, 1) : addWeeks(currentDateObj, -1);
     } else {
-      setCurrentDate(direction === 'next' ? addDays(currentDate, 1) : addDays(currentDate, -1));
+      newDate = direction === 'next' ? addDays(currentDateObj, 1) : addDays(currentDateObj, -1);
     }
+    dispatch(setCurrentDate(newDate.toISOString()));
   };
 
   const handleEventClick = (event: Event) => {
-    setSelectedEvent(event);
-    setShowEventModal(true);
+    dispatch(setSelectedEvent(event));
+    dispatch(setShowEventModal(true));
   };
 
-  const handleAddEvent = (newEvent: Event) => {
-    setEvents([...events, { ...newEvent, id: Date.now().toString() }]);
-    setShowEventModal(false);
+  const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
+    dispatch(addEvent(newEvent));
+    dispatch(setShowEventModal(false));
   };
 
   const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents(events.map(event => event.id === updatedEvent.id ? updatedEvent : event));
-    setShowEventModal(false);
+    dispatch(updateEvent(updatedEvent));
+    dispatch(setShowEventModal(false));
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    setEvents(events.filter(event => event.id !== eventId));
-    setShowEventModal(false);
+    dispatch(deleteEvent(eventId));
+    dispatch(setShowEventModal(false));
   };
 
   const filteredEvents = filter === 'all' 
@@ -73,16 +71,16 @@ export default function Calendar() {
 
   const viewRange = {
     month: {
-      start: startOfMonth(currentDate),
-      end: endOfMonth(currentDate)
+      start: startOfMonth(currentDateObj),
+      end: endOfMonth(currentDateObj)
     },
     week: {
-      start: startOfWeek(currentDate),
-      end: endOfWeek(currentDate)
+      start: startOfWeek(currentDateObj),
+      end: endOfWeek(currentDateObj)
     },
     day: {
-      start: currentDate,
-      end: currentDate
+      start: currentDateObj,
+      end: currentDateObj
     }
   }[view];
 
@@ -91,7 +89,7 @@ export default function Calendar() {
       <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setCurrentDate(new Date())}
+            onClick={() => dispatch(setCurrentDate(new Date().toISOString()))}
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
           >
             <CalendarIcon className="h-4 w-4" />
@@ -112,7 +110,7 @@ export default function Calendar() {
             </button>
           </div>
           <h2 className="text-xl font-semibold text-gray-900">
-            {format(currentDate, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
+            {format(currentDateObj, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
           </h2>
         </div>
         
@@ -121,7 +119,7 @@ export default function Calendar() {
             {(['month', 'week', 'day'] as ViewType[]).map((v) => (
               <button
                 key={v}
-                onClick={() => setView(v)}
+                onClick={() => dispatch(setView(v))}
                 className={`px-3 py-1.5 text-sm font-medium rounded-md ${
                   view === v
                     ? 'bg-blue-100 text-blue-600'
@@ -135,7 +133,7 @@ export default function Calendar() {
           
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => dispatch(setFilter(e.target.value))}
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm"
           >
             <option value="all">All Events</option>
@@ -145,8 +143,8 @@ export default function Calendar() {
           
           <button
             onClick={() => {
-              setSelectedEvent(null);
-              setShowEventModal(true);
+              dispatch(setSelectedEvent(null));
+              dispatch(setShowEventModal(true));
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
           >
@@ -159,21 +157,21 @@ export default function Calendar() {
         <div className="flex-1 overflow-auto">
           {view === 'month' && (
             <MonthView
-              date={currentDate}
+              date={currentDateObj}
               events={filteredEvents}
               onEventClick={handleEventClick}
             />
           )}
           {view === 'week' && (
             <WeekView
-              date={currentDate}
+              date={currentDateObj}
               events={filteredEvents}
               onEventClick={handleEventClick}
             />
           )}
           {view === 'day' && (
             <DayView
-              date={currentDate}
+              date={currentDateObj}
               events={filteredEvents}
               onEventClick={handleEventClick}
             />
@@ -192,7 +190,7 @@ export default function Calendar() {
       {showEventModal && (
         <EventModal
           event={selectedEvent}
-          onClose={() => setShowEventModal(false)}
+          onClose={() => dispatch(setShowEventModal(false))}
           onSave={selectedEvent ? handleUpdateEvent : handleAddEvent}
           onDelete={selectedEvent ? handleDeleteEvent : undefined}
         />

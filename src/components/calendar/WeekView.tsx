@@ -15,10 +15,10 @@ export default function WeekView({ date, events, onEventClick }: WeekViewProps) 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const getEventsForDayAndHour = (day: Date, hour: number) => 
-    events.filter(event => 
-      isSameDay(event.start, day) && 
-      event.start.getHours() === hour
-    );
+    events.filter(event => {
+      const eventDate = new Date(event.start);
+      return isSameDay(eventDate, day) && eventDate.getHours() === hour;
+    });
 
   return (
     <div className="flex h-full">

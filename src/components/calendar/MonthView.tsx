@@ -14,7 +14,7 @@ export default function MonthView({ date, events, onEventClick }: MonthViewProps
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const getEventsForDay = (day: Date) => 
-    events.filter(event => isSameDay(event.start, day));
+    events.filter(event => isSameDay(new Date(event.start), day));
 
   return (
     <div className="grid grid-cols-7 h-full">
@@ -42,7 +42,7 @@ export default function MonthView({ date, events, onEventClick }: MonthViewProps
                 className="w-full text-left px-2 py-1 text-xs rounded-md"
                 style={{ backgroundColor: `${event.color}20`, color: event.color }}
               >
-                {format(event.start, 'HH:mm')} {event.title}
+                {format(new Date(event.start), 'HH:mm')} {event.title}
               </button>
             ))}
           </div>

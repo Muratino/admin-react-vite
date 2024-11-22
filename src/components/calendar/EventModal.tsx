@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Event } from '../../types/calendar';
+import { Event, serializeEvent } from '../../types/calendar';
 
 interface EventModalProps {
   event?: Event | null;
@@ -12,8 +12,12 @@ interface EventModalProps {
 export default function EventModal({ event, onClose, onSave, onDelete }: EventModalProps) {
   const [title, setTitle] = useState(event?.title || '');
   const [description, setDescription] = useState(event?.description || '');
-  const [startDate, setStartDate] = useState(event?.start.toISOString().slice(0, 16) || '');
-  const [endDate, setEndDate] = useState(event?.end.toISOString().slice(0, 16) || '');
+  const [startDate, setStartDate] = useState(
+    event?.start ? new Date(event.start).toISOString().slice(0, 16) : ''
+  );
+  const [endDate, setEndDate] = useState(
+    event?.end ? new Date(event.end).toISOString().slice(0, 16) : ''
+  );
   const [category, setCategory] = useState(event?.category || 'meeting');
   const [color, setColor] = useState(event?.color || '#4F46E5');
 
@@ -27,7 +31,7 @@ export default function EventModal({ event, onClose, onSave, onDelete }: EventMo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
+    const eventData = {
       id: event?.id || '',
       title,
       description,
@@ -35,7 +39,8 @@ export default function EventModal({ event, onClose, onSave, onDelete }: EventMo
       end: new Date(endDate),
       category,
       color
-    });
+    };
+    onSave(serializeEvent(eventData));
   };
 
   return (
@@ -131,10 +136,10 @@ export default function EventModal({ event, onClose, onSave, onDelete }: EventMo
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            {onDelete && (
+            {onDelete && event?.id && (
               <button
                 type="button"
-                onClick={() => onDelete(event!.id)}
+                onClick={() => onDelete(event.id)}
                 className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md"
               >
                 Delete

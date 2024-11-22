@@ -12,10 +12,10 @@ export default function DayView({ date, events, onEventClick }: DayViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const getEventsForHour = (hour: number) => 
-    events.filter(event => 
-      isSameDay(event.start, date) && 
-      event.start.getHours() === hour
-    );
+    events.filter(event => {
+      const eventDate = new Date(event.start);
+      return isSameDay(eventDate, date) && eventDate.getHours() === hour;
+    });
 
   return (
     <div className="flex h-full">
@@ -43,7 +43,7 @@ export default function DayView({ date, events, onEventClick }: DayViewProps) {
               >
                 <div className="font-medium">{event.title}</div>
                 <div className="text-xs opacity-75">
-                  {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+                  {format(new Date(event.start), 'HH:mm')} - {format(new Date(event.end), 'HH:mm')}
                 </div>
               </button>
             ))}

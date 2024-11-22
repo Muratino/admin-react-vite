@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Bell, Search, User } from 'lucide-react';
+import { RootState } from '../store/store';
+import UserDropdown from './UserDropdown';
 
 export default function Header() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -20,14 +26,35 @@ export default function Header() {
             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
           </button>
           
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-semibold">John Doe</div>
-              <div className="text-xs text-gray-500">Administrator</div>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="h-6 w-6 text-gray-600" />
-            </div>
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+            >
+              <div className="text-right">
+                <div className="text-sm font-semibold">
+                  {user?.username || user?.email}
+                </div>
+                <div className="text-xs text-gray-500">Administrator</div>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-6 w-6 text-gray-600" />
+                )}
+              </div>
+            </button>
+
+            <UserDropdown
+              user={user}
+              isOpen={isDropdownOpen}
+              onClose={() => setIsDropdownOpen(false)}
+            />
           </div>
         </div>
       </div>
